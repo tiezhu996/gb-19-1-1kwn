@@ -12,9 +12,11 @@ import {
   Select,
   InputNumber,
   Input,
+  Tabs,
 } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { teacherApi, Teacher } from '@/services/api'
+import MonthlySettlement from './MonthlySettlement'
 
 const { Title } = Typography
 const { Option } = Select
@@ -155,6 +157,13 @@ function Teachers() {
         教师管理
       </Title>
 
+      <Tabs
+        defaultActiveKey="teachers"
+        items={[
+          {
+            key: 'teachers',
+            label: '教师信息',
+            children: (
       <Card>
         <div
           style={{
@@ -175,6 +184,15 @@ function Teachers() {
           loading={loading}
         />
       </Card>
+            ),
+          },
+          {
+            key: 'settlement',
+            label: '月度结算',
+            children: <MonthlySettlement />,
+          },
+        ]}
+      />
 
       <Modal
         title={modalType === 'create' ? '新增教师' : '编辑教师'}

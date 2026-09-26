@@ -168,3 +168,32 @@ type Performance struct {
 	Status      string    `json:"status" gorm:"size:20;default:pending"`
 	Teacher     *Teacher  `json:"teacher,omitempty" gorm:"foreignKey:TeacherID"`
 }
+
+// TeacherSettlement 教师月度课时费结算单，同一教师同一月份仅保留一张
+type TeacherSettlement struct {
+	BaseModel
+	TeacherID  uint      `json:"teacher_id" gorm:"uniqueIndex:idx_teacher_month;not null"`
+	Month      string    `json:"month" gorm:"size:7;uniqueIndex:idx_teacher_month;not null"`
+	TotalHours int       `json:"total_hours" gorm:"default:0"`
+	TotalSalary float64  `json:"total_salary" gorm:"type:decimal(10,2);default:0"`
+	// pending 待确认 / confirmed 已确认（金额锁定）/ needs_recalc 待重算
+	Status     string    `json:"status" gorm:"size:20;default:pending"`
+	ConfirmedAt *time.Time `json:"confirmed_at"`
+	Teacher    *Teacher  `json:"teacher,omitempty" gorm:"foreignKey:TeacherID"`
+	Items      []TeacherSettlementItem `json:"items,omitempty" gorm:"foreignKey:SettlementID"`
+}
+
+// TeacherSettlementItem 结算单内每节已点名课程的费用明细（生成时快照）
+type TeacherSettlementItem struct {
+	BaseModel
+	SettlementID uint    `json:"settlement_id" gorm:"index;not null"`
+	ScheduleID   uint    `json:"schedule_id" gorm:"index;not null"`
+	CourseID     uint    `json:"course_id"`
+	CourseName   string  `json:"course_name" gorm:"size:100"`
+	Date         string  `json:"date" gorm:"size:10;not null"`
+	StartTime    string  `json:"start_time" gorm:"size:5"`
+	EndTime      string  `json:"end_time" gorm:"size:5"`
+	Duration     int     `json:"duration" gorm:"not null"`
+	HourlyRate   float64 `json:"hourly_rate" gorm:"type:decimal(10,2);not null"`
+	Amount       float64 `json:"amount" gorm:"type:decimal(10,2);not null"`
+}

@@ -124,6 +124,15 @@ func main() {
 		performances.GET("", controllers.GetTeacherPerformances)
 	}
 
+	settlements := api.Group("/teacher-settlements")
+	{
+		settlements.GET("", controllers.GetTeacherSettlements)
+		settlements.POST("/generate", controllers.GenerateTeacherSettlement)
+		settlements.GET("/:id", controllers.GetTeacherSettlement)
+		settlements.POST("/:id/confirm", controllers.ConfirmTeacherSettlement)
+		settlements.POST("/:id/recalculate", controllers.RecalculateTeacherSettlement)
+	}
+
 	schedules := api.Group("/schedules")
 	{
 		schedules.GET("", controllers.GetSchedules)

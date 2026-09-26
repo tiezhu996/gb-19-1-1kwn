@@ -14,3 +14,7 @@ body {
 #root {
   min-height: 100vh;
 }
+
+.settlement-row-warning > td {
+  background-color: #fff2f0 !important;
+}

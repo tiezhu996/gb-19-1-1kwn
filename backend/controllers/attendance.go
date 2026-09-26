@@ -76,6 +76,13 @@ func TakeAttendance(c *gin.Context) {
 		return
 	}
 
+	// 该月已被财务确认的结算单金额锁定，补录考勤只能标记为待重算
+	if err := markSettlementNeedsRecalc(tx, schedule.TeacherID, schedule.Date); err != nil {
+		tx.Rollback()
+		utils.InternalServerError(c, "更新结算单状态失败")
+		return
+	}
+
 	tx.Commit()
 	utils.Success(c, nil)
 }

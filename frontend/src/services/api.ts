@@ -127,6 +127,41 @@ export const teacherApi = {
   performances: (params?: any) => get('/performances', params),
 }
 
+export interface TeacherSettlementItem {
+  id?: number
+  schedule_id: number
+  course_id?: number
+  course_name?: string
+  date: string
+  start_time?: string
+  end_time?: string
+  duration: number
+  hourly_rate: number
+  amount: number
+}
+
+export interface TeacherSettlement {
+  id?: number
+  teacher_id: number
+  month: string
+  total_hours: number
+  total_salary: number
+  // pending 待确认 / confirmed 已确认 / needs_recalc 待重算
+  status: string
+  confirmed_at?: string
+  teacher?: Teacher
+  items?: TeacherSettlementItem[]
+}
+
+export const settlementApi = {
+  list: (params?: any) => get('/teacher-settlements', params),
+  get: (id: number) => get(`/teacher-settlements/${id}`),
+  generate: (data: { month: string; teacher_id?: number }) =>
+    post('/teacher-settlements/generate', data),
+  confirm: (id: number) => post(`/teacher-settlements/${id}/confirm`),
+  recalculate: (id: number) => post(`/teacher-settlements/${id}/recalculate`),
+}
+
 export interface Schedule {
   id?: number
   course_id: number
