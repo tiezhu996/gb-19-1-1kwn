@@ -8,7 +8,15 @@ import (
 	"edu-train/utils"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
+
+// scheduleHasAttendance 判断该课是否已点名
+func scheduleHasAttendance(scheduleID uint) bool {
+	var count int64
+	database.DB.Model(&models.Attendance{}).Where("schedule_id = ?", scheduleID).Count(&count)
+	return count > 0
+}
 
 func GetSchedules(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
@@ -131,9 +139,39 @@ func UpdateSchedule(c *gin.Context) {
 		return
 	}
 
+	// 记录变更前的教师与月份，便于把已确认的结算单标记为待重算
+	oldTeacherID := schedule.TeacherID
+	oldMonth := ""
+	if len(schedule.Date) >= 7 {
+		oldMonth = schedule.Date[:7]
+	}
+
 	if err := database.DB.Model(&schedule).Updates(updates).Error; err != nil {
 		utils.InternalServerError(c, "更新失败")
 		return
+	}
+
+	// 已点名的课发生改动，涉及的教师月份结算单都需要重算
+	if scheduleHasAttendance(uint(id)) {
+		newTeacherID := oldTeacherID
+		newMonth := oldMonth
+		if v, ok := updates["teacher_id"]; ok {
+			if f, ok := v.(float64); ok {
+				newTeacherID = uint(f)
+			}
+		}
+		if v, ok := updates["date"]; ok {
+			if s, ok := v.(string); ok && len(s) >= 7 {
+				newMonth = s[:7]
+			}
+		}
+		_ = database.DB.Transaction(func(tx *gorm.DB) error {
+			_ = markSettlementStale(tx, oldTeacherID, oldMonth)
+			if newTeacherID != oldTeacherID || newMonth != oldMonth {
+				_ = markSettlementStale(tx, newTeacherID, newMonth)
+			}
+			return nil
+		})
 	}
 
 	utils.Success(c, schedule)
@@ -142,9 +180,29 @@ func UpdateSchedule(c *gin.Context) {
 func DeleteSchedule(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
+	var schedule models.Schedule
+	if err := database.DB.First(&schedule, id).Error; err != nil {
+		utils.NotFound(c, "排课不存在")
+		return
+	}
+
+	attended := scheduleHasAttendance(uint(id))
+	teacherID := schedule.TeacherID
+	month := ""
+	if len(schedule.Date) >= 7 {
+		month = schedule.Date[:7]
+	}
+
 	if err := database.DB.Delete(&models.Schedule{}, id).Error; err != nil {
 		utils.InternalServerError(c, "删除失败")
 		return
+	}
+
+	// 删除已点名的课，对应教师月份已确认的结算单需重算
+	if attended && month != "" {
+		_ = database.DB.Transaction(func(tx *gorm.DB) error {
+			return markSettlementStale(tx, teacherID, month)
+		})
 	}
 
 	utils.Success(c, nil)

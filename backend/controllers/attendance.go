@@ -76,6 +76,15 @@ func TakeAttendance(c *gin.Context) {
 		return
 	}
 
+	// 点名（含补录）后，该教师当月已确认的结算单需标记为待重算
+	if len(schedule.Date) >= 7 {
+		if err := markSettlementStale(tx, schedule.TeacherID, schedule.Date[:7]); err != nil {
+			tx.Rollback()
+			utils.InternalServerError(c, "更新结算单状态失败")
+			return
+		}
+	}
+
 	tx.Commit()
 	utils.Success(c, nil)
 }

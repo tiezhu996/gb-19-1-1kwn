@@ -69,6 +69,8 @@ func migrate() error {
 		&models.Payment{},
 		&models.Refund{},
 		&models.Performance{},
+		&models.TeacherSettlement{},
+		&models.SettlementItem{},
 	)
 }
 

@@ -127,6 +127,58 @@ export const teacherApi = {
   performances: (params?: any) => get('/performances', params),
 }
 
+export type SettlementStatus = 'pending' | 'confirmed' | 'stale'
+
+export interface SettlementItem {
+  id?: number
+  settlement_id?: number
+  schedule_id: number
+  course_id?: number
+  date: string
+  start_time?: string
+  end_time?: string
+  course_name?: string
+  duration: number
+  hourly_rate: number
+  amount: number
+}
+
+export interface Settlement {
+  id?: number
+  teacher_id: number
+  month: string
+  total_hours: number
+  total_amount: number
+  hourly_rate: number
+  status: SettlementStatus
+  confirmed_at?: string
+  teacher?: Teacher
+  items?: SettlementItem[]
+}
+
+export interface SettlementGenerateResult {
+  month: string
+  generated: Array<{
+    settlement_id: number
+    teacher_id: number
+    teacher_name: string
+    total_hours: number
+    total_amount: number
+    lesson_count: number
+  }>
+  skipped: Array<{ teacher_id: number; teacher_name: string }>
+}
+
+export const settlementApi = {
+  list: (params?: { month?: string; teacher_id?: number; status?: string }) =>
+    get<Settlement[]>('/settlements', params),
+  generate: (month: string) =>
+    post<SettlementGenerateResult>('/settlements/generate', { month }),
+  get: (id: number) => get<Settlement>(`/settlements/${id}`),
+  confirm: (id: number) => post(`/settlements/${id}/confirm`),
+  reopen: (id: number) => post(`/settlements/${id}/reopen`),
+}
+
 export interface Schedule {
   id?: number
   course_id: number

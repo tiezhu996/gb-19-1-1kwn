@@ -12,9 +12,11 @@ import {
   Select,
   InputNumber,
   Input,
+  Tabs,
 } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { teacherApi, Teacher } from '@/services/api'
+import MonthlySettlements from '@/components/MonthlySettlements'
 
 const { Title } = Typography
 const { Option } = Select
@@ -155,26 +157,44 @@ function Teachers() {
         教师管理
       </Title>
 
-      <Card>
-        <div
-          style={{
-            marginBottom: 16,
-            display: 'flex',
-            justifyContent: 'flex-end',
-          }}
-        >
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-            新增教师
-          </Button>
-        </div>
+      <Tabs
+        defaultActiveKey="teachers"
+        items={[
+          {
+            key: 'teachers',
+            label: '教师信息',
+            children: (
+              <>
+                <Card>
+                  <div
+                    style={{
+                      marginBottom: 16,
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                    }}
+                  >
+                    <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+                      新增教师
+                    </Button>
+                  </div>
 
-        <Table
-          columns={columns}
-          dataSource={teachers}
-          rowKey="id"
-          loading={loading}
-        />
-      </Card>
+                  <Table
+                    columns={columns}
+                    dataSource={teachers}
+                    rowKey="id"
+                    loading={loading}
+                  />
+                </Card>
+              </>
+            ),
+          },
+          {
+            key: 'settlements',
+            label: '月度结算',
+            children: <MonthlySettlements />,
+          },
+        ]}
+      />
 
       <Modal
         title={modalType === 'create' ? '新增教师' : '编辑教师'}
